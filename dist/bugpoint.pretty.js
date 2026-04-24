@@ -1264,6 +1264,31 @@ R7?.addEventListener("change", async ($) => {
     } catch (Z) {}
     $.target.value = ""
 });
+var _bundledReplayFiles = [
+    "replay--1140358275.json",
+    "replay--1140879076.json",
+    "replay--1145039209.json"
+];
+(function setupBundledReplays() {
+    if (!Y4) return;
+    let creditsBtn = document.getElementById("game-bg-credits-btn");
+    for (let fname of _bundledReplayFiles) {
+        let seed = fname.replace(/^replay-/, "").replace(/\.json$/, ""),
+            btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "game-bg-bundled-replay-btn";
+        btn.textContent = `WATCH ${seed}`;
+        btn.addEventListener("click", async () => {
+            try {
+                let res = await fetch("./" + fname);
+                if (!res.ok) return;
+                let data = await res.json();
+                if (data && typeof data.s === "number" && Array.isArray(data.e)) t3(data)
+            } catch (err) {}
+        });
+        Y4.insertBefore(btn, creditsBtn)
+    }
+})();
 var H3 = document.getElementById("game-bg-credits"),
     h1 = document.getElementById("game-bg-credits-btn"),
     v1 = document.getElementById("game-bg-credits-close");

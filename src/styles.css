@@ -367,7 +367,8 @@ body.game-bg-debug-open #game-bg-head-debug { display: block; }
 #game-bg-replay-btn,
 #game-bg-save-replay-btn,
 #game-bg-load-replay-btn,
-#game-bg-high-score-btn {
+#game-bg-high-score-btn,
+.game-bg-bundled-replay-btn {
   padding: 8px 16px;
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -382,11 +383,13 @@ body.game-bg-debug-open #game-bg-head-debug { display: block; }
 #game-bg-replay-btn:hover,
 #game-bg-save-replay-btn:hover,
 #game-bg-load-replay-btn:hover,
-#game-bg-high-score-btn:hover { background: rgba(124,124,124,0.12); }
+#game-bg-high-score-btn:hover,
+.game-bg-bundled-replay-btn:hover { background: rgba(124,124,124,0.12); }
 #game-bg-replay-btn:active,
 #game-bg-save-replay-btn:active,
 #game-bg-load-replay-btn:active,
-#game-bg-high-score-btn:active { background: rgba(124,124,124,0.22); }
+#game-bg-high-score-btn:active,
+.game-bg-bundled-replay-btn:active { background: rgba(124,124,124,0.22); }
 #game-bg-high-score-btn:disabled {
   color: #555;
   cursor: not-allowed;
