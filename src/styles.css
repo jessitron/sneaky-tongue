@@ -240,6 +240,33 @@ body.game-bg-debug-open #game-bg-head-debug { display: block; }
   80%  { opacity: 1; transform: translateY(-4px); }
   100% { opacity: 0; transform: translateY(-10px); }
 }
+#game-bg-advice-labels {
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 2;
+}
+.game-bg-advice-label {
+  position: absolute;
+  transform: translate(-50%, calc(-50% - 34px));
+  transform-origin: center center;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  text-transform: uppercase;
+}
+.game-bg-advice-grab  { background: rgba(32, 96, 32, 0.85);  color: #c1f5c1; }
+.game-bg-advice-avoid { background: rgba(112, 32, 32, 0.85); color: #ffc1c1; }
+.game-bg-advice-wait  { background: rgba(96, 72, 16, 0.85);  color: #ffd585; }
+.game-bg-advice-skip  { background: rgba(64, 64, 64, 0.8);   color: #cccccc; }
 #game-bg-level-label {
   position: absolute;
   top: 100%;                           /* anchored to the bottom of the bug-count stack; doesn't push siblings */

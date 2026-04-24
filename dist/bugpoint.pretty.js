@@ -1361,6 +1361,78 @@ R7?.addEventListener("change", async ($) => {
     }
     requestAnimationFrame(tick)
 })();
+(function setupEmojiAdvice() {
+    let eventLabels = document.getElementById("game-bg-event-labels");
+    if (!eventLabels || !eventLabels.parentElement) return;
+    let container = document.createElement("div");
+    container.id = "game-bg-advice-labels";
+    container.setAttribute("aria-hidden", "true");
+    eventLabels.parentElement.insertBefore(container, eventLabels.nextSibling);
+    const formations = new Set(["heart", "circle", "club", "sparkle", "infinity", "envelope", "dollar"]),
+        alwaysGrab = new Set(["big", "mirror", "magnet", "tonguefast"]),
+        alwaysAvoid = new Set(["speedup", "small", "tongueslow", "restless", "twitchy", "spiral", "wave", "scatter", "dizzy", "zigzag", "wacky", "ghost"]);
+
+    function adviceFor(bug) {
+        let t = bug.type;
+        if (t === "normal") return null;
+        if (formations.has(t)) return { label: "GRAB", kind: "grab" };
+        if (alwaysGrab.has(t)) return { label: "GRAB", kind: "grab" };
+        if (alwaysAvoid.has(t)) return { label: "AVOID", kind: "avoid" };
+        if (t === "time") {
+            let elapsed = c0 ? Math.max(0, k - m0 + k0) * C : 0,
+                frac = V4 > 0 ? elapsed / V4 : 0;
+            return frac >= 0.5
+                ? { label: "GRAB NOW", kind: "grab" }
+                : { label: "NOT YET", kind: "wait" }
+        }
+        if (t === "slowdown") {
+            return L0 > 0
+                ? { label: "GRAB", kind: "grab" }
+                : { label: "SKIP", kind: "skip" }
+        }
+        if (t === "skull" || t === "crossbones") {
+            return F
+                ? { label: "GRAB", kind: "grab" }
+                : { label: "AVOID", kind: "avoid" }
+        }
+        return null
+    }
+    let nodes = new Map();
+
+    function tick() {
+        if (!Array.isArray(B)) {
+            requestAnimationFrame(tick);
+            return
+        }
+        let used = new Set();
+        for (let i = 0; i < B.length; i++) {
+            let bug = B[i];
+            if (!bug || bug.dead || bug.attached) continue;
+            let advice = adviceFor(bug);
+            if (!advice) continue;
+            let node = nodes.get(i);
+            if (!node) {
+                node = document.createElement("div");
+                container.appendChild(node);
+                nodes.set(i, node)
+            }
+            let cls = `game-bg-advice-label game-bg-advice-${advice.kind}`;
+            if (node.className !== cls) node.className = cls;
+            if (node.textContent !== advice.label) node.textContent = advice.label;
+            node.style.left = `${bug.x}px`;
+            node.style.top = `${bug.y}px`;
+            used.add(i)
+        }
+        for (let [i, node] of nodes) {
+            if (!used.has(i)) {
+                node.remove();
+                nodes.delete(i)
+            }
+        }
+        requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+})();
 var H3 = document.getElementById("game-bg-credits"),
     h1 = document.getElementById("game-bg-credits-btn"),
     v1 = document.getElementById("game-bg-credits-close");

@@ -12,6 +12,7 @@ const args = process.argv.slice(2);
 let outfile = "screenshot-latest.png";
 let waitMs = 800;
 let click = null;
+let postClickWaitMs = 800;
 let viewportW = 900;
 let viewportH = 900;
 let url = "http://localhost:8000/";
@@ -20,6 +21,7 @@ for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "--wait") waitMs = Number(args[++i]);
     else if (a === "--click") click = args[++i];
+    else if (a === "--post-click-wait") postClickWaitMs = Number(args[++i]);
     else if (a === "--url") url = args[++i];
     else if (a === "--size") { const [w, h] = args[++i].split("x").map(Number); viewportW = w; viewportH = h; }
     else if (!a.startsWith("--")) outfile = a;
@@ -54,7 +56,7 @@ await page.waitForTimeout(waitMs);
 
 if (click) {
     await page.click(click);
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(postClickWaitMs);
 }
 
 const abs = resolve(outfile);
