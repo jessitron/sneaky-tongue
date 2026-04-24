@@ -1266,30 +1266,51 @@ R7?.addEventListener("change", async ($) => {
     } catch (Z) {}
     $.target.value = ""
 });
-var _bundledReplayFiles = [
-    "replay--1140358275.json",
-    "replay--1140879076.json",
-    "replay--1145039209.json"
-];
-(function setupBundledReplays() {
+(async function setupNewestReplayButton() {
     if (!Y4) return;
-    let creditsBtn = document.getElementById("game-bg-credits-btn");
-    for (let fname of _bundledReplayFiles) {
-        let seed = fname.replace(/^replay-/, "").replace(/\.json$/, ""),
-            btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "game-bg-bundled-replay-btn";
-        btn.textContent = `WATCH ${seed}`;
-        btn.addEventListener("click", async () => {
-            try {
-                let res = await fetch("./" + fname);
-                if (!res.ok) return;
-                let data = await res.json();
-                if (data && typeof data.s === "number" && Array.isArray(data.e)) t3(data)
-            } catch (err) {}
-        });
-        Y4.insertBefore(btn, creditsBtn)
+    let creditsBtn = document.getElementById("game-bg-credits-btn"),
+        btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "game-bg-bundled-replay-btn";
+    btn.textContent = "WATCH NEWEST";
+    btn.disabled = true;
+    Y4.insertBefore(btn, creditsBtn);
+    let newestFile = null;
+    try {
+        let listRes = await fetch("./replays/");
+        if (!listRes.ok) throw new Error(`directory listing HTTP ${listRes.status}`);
+        let html = await listRes.text(),
+            doc = new DOMParser().parseFromString(html, "text/html"),
+            files = [...doc.querySelectorAll("a")]
+                .map(a => a.getAttribute("href"))
+                .filter(h => h && /^replay-.*\.json$/i.test(h));
+        if (files.length === 0) throw new Error("no replay-*.json files in ./replays/");
+        let withMtime = await Promise.all(files.map(async name => {
+            let h = await fetch("./replays/" + name, { method: "HEAD" }),
+                lm = h.headers.get("Last-Modified");
+            return { name, mtime: lm ? Date.parse(lm) : 0 };
+        }));
+        withMtime.sort((a, b) => b.mtime - a.mtime);
+        newestFile = withMtime[0].name;
+        let seed = newestFile.replace(/^replay-/, "").replace(/\.json$/, "");
+        btn.textContent = `WATCH NEWEST (${seed})`;
+        btn.disabled = false
+    } catch (err) {
+        console.warn("[bundled-replay] could not find newest replay:", err);
+        btn.textContent = "WATCH NEWEST (none found)"
     }
+    btn.addEventListener("click", async () => {
+        if (!newestFile) return;
+        try {
+            let res = await fetch("./replays/" + newestFile);
+            if (!res.ok) throw new Error(`fetch HTTP ${res.status}`);
+            let data = await res.json();
+            if (!(data && typeof data.s === "number" && Array.isArray(data.e))) throw new Error("replay JSON missing s/e");
+            t3(data)
+        } catch (err) {
+            console.warn("[bundled-replay] could not play replay:", err)
+        }
+    })
 })();
 var H3 = document.getElementById("game-bg-credits"),
     h1 = document.getElementById("game-bg-credits-btn"),
