@@ -201,8 +201,13 @@ body.game-bg-debug-open #game-bg-head-debug { display: block; }
 }
 #game-bg-alive-count {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  /* Parked just past the right edge of #game-bg-bug-meter (which sits at
+     right: -10px, width 14, so its right edge is container_right + 10).
+     Top-aligned with the meter top (meter is 240 tall, centered at 50%,
+     so its top sits at 50% - 120). */
+  top: 50%;
+  left: 100%;
+  transform: translate(16px, -120px);
   display: flex;
   align-items: baseline;
   gap: 6px;
@@ -210,6 +215,7 @@ body.game-bg-debug-open #game-bg-head-debug { display: block; }
   pointer-events: none;
   user-select: none;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 #game-bg-alive-num {
   font-size: 20px;
@@ -240,6 +246,37 @@ body.game-bg-debug-open #game-bg-head-debug { display: block; }
   80%  { opacity: 1; transform: translateY(-4px); }
   100% { opacity: 0; transform: translateY(-10px); }
 }
+/* Vertical 0–99 meter — right edge, centered. Fills upward with the live
+   alive-count. Goes "hot" (red) once it has ever reached 99, and drains
+   from that color until the count hits 0 again. */
+#game-bg-bug-meter {
+  position: absolute;
+  top: 50%;
+  right: -10px;                       /* sits in the gutter outside the circle;
+                                         the game-ui/container both allow overflow */
+  transform: translateY(-50%);
+  width: 14px;
+  height: 240px;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 7px;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+#game-bg-bug-meter-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0%;
+  background: #7ac77a;
+  transition: height 0.12s ease-out, background-color 0.35s ease;
+}
+#game-bg-bug-meter.game-bg-bug-meter-hot #game-bg-bug-meter-fill {
+  background: #d87c7c;
+}
 #game-bg-advice-labels {
   position: absolute;
   inset: 8px;
@@ -249,7 +286,7 @@ body.game-bg-debug-open #game-bg-head-debug { display: block; }
 }
 .game-bg-advice-label {
   position: absolute;
-  transform: translate(-50%, calc(-50% - 34px));
+  transform: translate(-50%, calc(-50% - 44px));
   transform-origin: center center;
   font-size: 9px;
   font-weight: 600;

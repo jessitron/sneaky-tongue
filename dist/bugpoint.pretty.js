@@ -1902,10 +1902,9 @@ class e3 {
         $.globalAlpha = Y * (Z > 1 ? 0.82 : 1) * X;
         let q = x4.includes(this.type),
             Q = s0 || F && U0.has(F.type) && k < F.expiresAtTick;
-        if (this.type !== "normal" && !Q) {
+        if (this.type !== "normal") {
             $.save();
-            let W = (Math.sin(p * Math.PI / 1000) + 1) / 2;
-            $.globalAlpha = (Z > 1 ? 0.82 : 1) * 0.85 * W * X, $.font = `${18*J}px serif`, $.textAlign = "center", $.textBaseline = "bottom";
+            $.globalAlpha = (Z > 1 ? 0.82 : 1) * 0.85 * X, $.font = `${18*J}px serif`, $.textAlign = "center", $.textBaseline = "bottom";
             let j = this.type === "slowdown" ? "\uD83D\uDC22" : this.type === "big" ? "\uD83C\uDF44" : this.type === "small" ? "\uD83E\uDD0F" : this.type === "speedup" ? "\uD83D\uDC07" : this.type === "time" ? "⏱️" : this.type === "magnet" ? "\uD83E\uDDF2" : this.type === "mirror" ? "\uD83E\uDE9E" : this.type === "spiral" ? "\uD83D\uDD04" : this.type === "wave" ? "\uD83C\uDF0A" : this.type === "scatter" ? "\uD83D\uDCA5" : this.type === "dizzy" ? "\uD83D\uDE35" : this.type === "zigzag" ? "\uD83C\uDFC3" : this.type === "wacky" ? "\uD83E\uDD2A" : this.type === "ghost" ? "\uD83D\uDC7B" : this.type === "heart" ? "❤️" : this.type === "circle" ? "⭕" : this.type === "club" ? "♣️" : this.type === "sparkle" ? "❇️" : this.type === "restless" ? "\uD83D\uDE24" : this.type === "twitchy" ? "\uD83D\uDE35‍\uD83D\uDCAB" : this.type === "infinity" ? "♾️" : this.type === "envelope" ? "✉️" : this.type === "dollar" ? "\uD83D\uDCB2" : this.type === "skull" ? "\uD83D\uDC80" : this.type === "crossbones" ? "☠️" : this.type === "tongueslow" ? "\uD83D\uDC0C" : this.type === "tonguefast" ? "\uD83D\uDE1B" : "❓";
             $.fillText(j, 0, -5 * J), $.restore()
         }
@@ -2782,6 +2781,7 @@ function Z5() {
             if (X7[I.type]) C3(W7[I.type], I.x, I.y)
     }
     if (J > 0) {
+        if (L3.classList.contains("game-bg-visible") && !J0 && !I0) L3.classList.remove("game-bg-visible");
         if (J >= 3) D4 += J;
         if (i4.length < 80) i4.push({
             strokeIdx: o4.length,
