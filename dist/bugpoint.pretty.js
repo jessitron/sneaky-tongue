@@ -1199,6 +1199,8 @@ function a3() {
     E1 = new Set, L1 = !0, L0 = 0, K4 = !1, H4 = !1, D4 = 0, k1 = 0, P1 = 0, f1 = 0, B1 = 0, R1 = 0, x1 = 0, u0 = 0, J4 = [], r3(!1)
 }
 a3();
+L3.classList.add("game-bg-visible");
+M3.style.opacity = "0";
 S4.addEventListener("click", () => {
     if (J0 = !1, n0 = C, Z4.classList.remove("game-bg-visible"), N4.style.display = "none", G4.style.display = "none", T0.style.display = "none", i0 = [], w4 = Date.now() & 4294967295, u3(), a = 0, p0 = null, b0 = null, d0 = null, D4 = 0, C4 = 0, L4 = !0, s0 = !1, o0.textContent = "0", E0 = !1, I0 = !1, k = 0, M0 = P3 = p, T7 = !1, m7 = !1, w7 = 0, S7 = 0, k0 = 0, c0 = !1, m0 = 0, V4 = A3, r4 = !1, n3(), a3(), z0) z0.classList.remove("game-bg-level-pop"), z0.textContent = "";
     if (B7(), c) c.classList.remove("game-bg-visible", "game-bg-new-record"), c.textContent = "";
