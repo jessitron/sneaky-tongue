@@ -1,0 +1,12 @@
+{
+  "name": "terpimost",
+  "private": true,
+  "description": "Bugpoint game analysis — screenshot tool only. Game is served statically from repo root.",
+  "type": "module",
+  "scripts": {
+    "screenshot": "node screenshot.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.59.1"
+  }
+}

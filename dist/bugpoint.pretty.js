@@ -1317,7 +1317,7 @@ R7?.addEventListener("change", async ($) => {
         addedEl = document.getElementById("game-bg-alive-added"),
         lostEl = document.getElementById("game-bg-alive-lost");
     if (!numEl || !addedEl || !lostEl) return;
-    let lastDead = B.map((bug) => bug.dead);
+    let lastDead = null;
 
     function flash(el, text) {
         el.textContent = text;
@@ -1327,6 +1327,19 @@ R7?.addEventListener("change", async ($) => {
     }
 
     function tick() {
+        if (!Array.isArray(B)) {
+            requestAnimationFrame(tick);
+            return
+        }
+        if (lastDead === null) {
+            lastDead = B.map((bug) => bug.dead);
+            let initialAlive = 0;
+            for (let bug of B)
+                if (!bug.dead) initialAlive++;
+            numEl.textContent = initialAlive;
+            requestAnimationFrame(tick);
+            return
+        }
         let alive = 0,
             added = 0,
             lost = 0;
