@@ -1315,15 +1315,27 @@ R7?.addEventListener("change", async ($) => {
 (function setupAliveCounter() {
     let numEl = document.getElementById("game-bg-alive-num"),
         addedEl = document.getElementById("game-bg-alive-added"),
-        lostEl = document.getElementById("game-bg-alive-lost");
+        lostEl = document.getElementById("game-bg-alive-lost"),
+        meterEl = document.getElementById("game-bg-bug-meter"),
+        meterFill = document.getElementById("game-bg-bug-meter-fill");
     if (!numEl || !addedEl || !lostEl) return;
-    let lastDead = null;
+    let lastDead = null,
+        meterHot = false;
 
     function flash(el, text) {
         el.textContent = text;
         el.classList.remove("game-bg-alive-delta-show");
         void el.offsetWidth;
         el.classList.add("game-bg-alive-delta-show")
+    }
+
+    function updateMeter(alive) {
+        if (!meterEl || !meterFill) return;
+        let capped = alive > 99 ? 99 : alive;
+        meterFill.style.height = `${(capped / 99) * 100}%`;
+        if (capped >= 99) meterHot = true;
+        else if (alive === 0) meterHot = false;
+        meterEl.classList.toggle("game-bg-bug-meter-hot", meterHot)
     }
 
     function tick() {
@@ -1337,6 +1349,7 @@ R7?.addEventListener("change", async ($) => {
             for (let bug of B)
                 if (!bug.dead) initialAlive++;
             numEl.textContent = initialAlive;
+            updateMeter(initialAlive);
             requestAnimationFrame(tick);
             return
         }
@@ -1355,6 +1368,7 @@ R7?.addEventListener("change", async ($) => {
         lastDead.length = B.length;
         for (let i = 0; i < B.length; i++) lastDead[i] = B[i].dead;
         numEl.textContent = alive;
+        updateMeter(alive);
         if (added > 0) flash(addedEl, `+${added}`);
         if (lost > 0) flash(lostEl, `−${lost}`);
         requestAnimationFrame(tick)
@@ -1369,8 +1383,8 @@ R7?.addEventListener("change", async ($) => {
     container.setAttribute("aria-hidden", "true");
     eventLabels.parentElement.insertBefore(container, eventLabels.nextSibling);
     const formations = new Set(["heart", "circle", "club", "sparkle", "infinity", "envelope", "dollar"]),
-        alwaysGrab = new Set(["big", "mirror", "magnet", "tonguefast"]),
-        alwaysAvoid = new Set(["speedup", "small", "tongueslow", "restless", "twitchy", "spiral", "wave", "scatter", "dizzy", "zigzag", "wacky", "ghost"]);
+        alwaysGrab = new Set(["big", "mirror", "magnet", "tonguefast", "ghost"]),
+        alwaysAvoid = new Set(["speedup", "small", "tongueslow", "restless", "twitchy", "spiral", "wave", "scatter", "dizzy", "zigzag", "wacky"]);
 
     function adviceFor(bug) {
         let t = bug.type;
