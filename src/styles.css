@@ -199,6 +199,47 @@ body.game-bg-debug-open #game-bg-head-debug { display: block; }
   user-select: none;
   font-variant-numeric: tabular-nums;
 }
+#game-bg-alive-count {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #7C7C7C;
+  pointer-events: none;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+#game-bg-alive-num {
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+  color: #b0b0b0;
+}
+#game-bg-alive-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+#game-bg-alive-added,
+#game-bg-alive-lost {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  min-width: 1.5em;
+}
+#game-bg-alive-added { color: #7ac77a; }
+#game-bg-alive-lost  { color: #d87c7c; }
+#game-bg-alive-added.game-bg-alive-delta-show,
+#game-bg-alive-lost.game-bg-alive-delta-show {
+  animation: game-bg-alive-delta-fade 1.1s ease-out forwards;
+}
+@keyframes game-bg-alive-delta-fade {
+  0%   { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; transform: translateY(-4px); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
 #game-bg-level-label {
   position: absolute;
   top: 100%;                           /* anchored to the bottom of the bug-count stack; doesn't push siblings */

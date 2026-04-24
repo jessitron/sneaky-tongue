@@ -1312,6 +1312,42 @@ R7?.addEventListener("change", async ($) => {
         }
     })
 })();
+(function setupAliveCounter() {
+    let numEl = document.getElementById("game-bg-alive-num"),
+        addedEl = document.getElementById("game-bg-alive-added"),
+        lostEl = document.getElementById("game-bg-alive-lost");
+    if (!numEl || !addedEl || !lostEl) return;
+    let lastDead = B.map((bug) => bug.dead);
+
+    function flash(el, text) {
+        el.textContent = text;
+        el.classList.remove("game-bg-alive-delta-show");
+        void el.offsetWidth;
+        el.classList.add("game-bg-alive-delta-show")
+    }
+
+    function tick() {
+        let alive = 0,
+            added = 0,
+            lost = 0;
+        for (let i = 0; i < B.length; i++) {
+            let isDead = B[i].dead;
+            if (!isDead) alive++;
+            let wasDead = lastDead[i];
+            if (wasDead === undefined) {
+                if (!isDead) added++
+            } else if (wasDead && !isDead) added++;
+            else if (!wasDead && isDead) lost++
+        }
+        lastDead.length = B.length;
+        for (let i = 0; i < B.length; i++) lastDead[i] = B[i].dead;
+        numEl.textContent = alive;
+        if (added > 0) flash(addedEl, `+${added}`);
+        if (lost > 0) flash(lostEl, `−${lost}`);
+        requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+})();
 var H3 = document.getElementById("game-bg-credits"),
     h1 = document.getElementById("game-bg-credits-btn"),
     v1 = document.getElementById("game-bg-credits-close");
