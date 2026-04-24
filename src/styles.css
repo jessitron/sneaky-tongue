@@ -1,0 +1,731 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+#game-bg-bug-count, #game-bg-tongue-msg, #game-bg-results, #game-bg-results-btn {
+  user-select: none;
+}
+
+body {
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+}
+
+#game-bg-page-root {
+  position: fixed;
+  inset: 0;
+  background: #3d3d3d;
+  cursor: crosshair;
+}
+
+button { cursor: pointer; }
+
+/* ── Single scaling container — only element with a JS-driven transform ── */
+#game-bg-game-container {
+  position: fixed;
+  width: 656px;
+  height: 656px;
+  top: 50%; left: 50%;
+  transform-origin: center center;
+  /* transform set by JS resize() */
+  overflow: visible;
+  border-radius: 50%;
+}
+
+/* ── Canvas stack: fills the container ── */
+#game-bg-canvas-wrap {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #F4F2F1;   /* updated by applyTheme */
+  /* box-shadow: 0 0 0 1px #b0b0b0; */
+}
+
+canvas {
+  touch-action: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#game-bg-bug-canvas    { pointer-events: none; }
+#game-bg-ui-canvas     { pointer-events: none; }
+
+/* ── Anteater head — SVG sprite overlay, centred on the circle ─────────── */
+#game-bg-head {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 128px; height: 128px;
+  margin: -64px 0 0 -64px;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;                          /* above event labels, below the bug-count stack */
+}
+#game-bg-head img {
+  position: absolute;
+  width: 1024px; height: 512px;
+  display: block;
+  opacity: 0;
+  /* transition is set per-flip from JS — asymmetric: fast fade-in, slow fade-out.
+     Keeps combined brightness near 1.0 during the cross-fade so the head doesn't
+     dim/flicker when cells switch rapidly. */
+  /* transform + transform-origin are set per-layer from JS — each layer rotates
+     around its own cell's centre, so the fading-out layer keeps its own
+     rotation and doesn't jitter when a new cell takes over. */
+}
+#game-bg-head img:first-child { opacity: 1; }
+
+/* ── Dev-only: which sprite cell the head is currently rendering ──────── */
+#game-bg-head-debug {
+  position: absolute;
+  left: 50%; top: 75%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  display: none;
+  text-align: center;
+  color: #ff3b30;
+  font: 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+}
+body.game-bg-debug-open #game-bg-head-debug { display: block; }
+#game-bg-head-debug .spr {
+  width: 128px; height: 128px;
+  overflow: hidden;
+  margin: 0 auto 6px;
+  border: 1px solid #ff3b30;
+  background: rgba(255,255,255,0.3);
+}
+#game-bg-head-debug .spr img {
+  position: relative;
+  width: 1024px; height: 512px;
+  display: block;
+}
+#game-bg-head-debug .lbl {
+  background: rgba(255,255,255,0.75);
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* ── Game UI overlay — fills container, inherits its scale ── */
+#game-bg-game-ui {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* ── Bug counter — centred, persistent throughout gameplay and game-over ── */
+#game-bg-bug-count {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, calc(-50% - 110px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.4;
+  transition: opacity 0.4s;
+  overflow: visible;
+  z-index: 3;                          /* above head + event labels */
+}
+#game-bg-bug-num {
+  font-size: 48px;
+  font-weight: 300;
+  color: #000;           /* overridden by applyTheme */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  text-align: center;
+  line-height: 1;
+}
+#game-bg-bug-label {
+  font-size: 13px;
+  color: #000;           /* overridden by applyTheme */
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: 4px;
+}
+/* Record/best-so-far label — absolutely anchored to the bottom of the
+   bug-count stack so toggling its visibility never reflows the number
+   above it. Shares `top: 100%` with #game-bg-level-label; they never
+   appear simultaneously (level pop is mid-game, record label is end-game). */
+#game-bg-record-label {
+  /* Flex child — sits directly below the bug-label in natural order. */
+  margin-top: 6px;
+  font-size: 12px;
+  color: #999;                         /* matches final-score-breakdown calc color */
+  letter-spacing: 0.08em;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  user-select: none;
+}
+#game-bg-record-label.game-bg-visible { opacity: 1; }
+/* NEW RECORD banner — independent element positioned near the top of the
+   circle (~56 px inside the canvas-wrap inset). Purple accent, uppercase. */
+#game-bg-new-record-banner {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 500;
+  font-size: 13px;
+  color: #b080f8;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  user-select: none;
+}
+#game-bg-new-record-banner.game-bg-visible { opacity: 1; }
+/* Build version — tiny label in the bottom-left corner of the game's square
+   bounding box (canvas-wrap inset is 8 px, plus ~12 px internal padding). */
+#game-bg-version {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: hsl(0 0% 40% / 1);
+  pointer-events: none;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+#game-bg-level-label {
+  position: absolute;
+  top: 100%;                           /* anchored to the bottom of the bug-count stack; doesn't push siblings */
+  left: 50%;
+  margin-top: 10px;
+  transform: translate(-50%, 0) scale(1);
+  transform-origin: center center;     /* scale grows outward from the label's own center */
+  font-size: 22px;
+  font-weight: 700;
+  color: #b080f8;                      /* matches tongue purple */
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity;
+}
+@keyframes game-bg-level-pop {
+  0%   { opacity: 1; transform: translate(-50%, 0)    scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 90px) scale(6.5); }
+}
+#game-bg-level-label.game-bg-level-pop {
+  animation: game-bg-level-pop 5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* Event announcements — per-catch effect labels (half the scale / duration /
+   drift of the Level label). Each element is created on demand and removed
+   on animationend; `#game-bg-bug-count` is the shared absolute host. */
+/* Event labels float at the caught-bug position (game-field coords). The host
+   matches the canvas-wrap inset so `left/top: bug.x/bug.y px` land correctly.
+   z-index: 1 — above the tongue/bug canvases but BELOW the head sprite (the
+   head creates its own absolute layer with an implicit higher stacking via
+   an explicit z-index: 2 on #game-bg-head), so the head visually covers
+   labels that land where the head is. The bug-counter stack sits on top of
+   everything via its own higher z-index. */
+#game-bg-event-labels {
+  position: absolute;
+  inset: 8px;                          /* matches #game-bg-canvas-wrap */
+  pointer-events: none;
+  overflow: visible;
+  z-index: 1;
+}
+.game-bg-event-label {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(1);
+  transform-origin: center center;
+  font-size: 14px;
+  font-weight: 400;
+  color: #7C7C7C;
+  letter-spacing: 0.03em;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 1;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity;
+  animation: game-bg-event-pop 1s linear forwards;
+}
+@keyframes game-bg-event-pop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  15%  { opacity: 1; transform: translate(-50%, -50%) scale(0.88); }
+  80%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* ── Results screen — transparent overlay, only shows play-again button ── */
+#game-bg-results {
+  display: none;
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.0);
+}
+#game-bg-results.game-bg-visible { display: block; }
+@keyframes game-bg-stroke-pop {
+  0%   { transform: translate(-50%, calc(-50% - 28px)) scale(1); }
+  35%  { transform: translate(-50%, calc(-50% - 28px)) scale(1.35); }
+  65%  { transform: translate(-50%, calc(-50% - 28px)) scale(0.95); }
+  100% { transform: translate(-50%, calc(-50% - 28px)) scale(1); }
+}
+#game-bg-best-stroke {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, calc(-50% - 28px));
+  text-align: center;
+  color: #b080f8;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 0.4s;
+}
+#game-bg-best-stroke.game-bg-pop {
+  animation: game-bg-stroke-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+#game-bg-multiply-sign {
+  font-size: 16px;
+  opacity: 0.85;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+#game-bg-best-stroke-num {
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+#game-bg-best-stroke-label {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 3px;
+}
+/* Breakdown sits absolutely anchored above the bug-count number. It is out of
+   flow, so its appearance cannot push the number down. */
+#game-bg-final-score-breakdown {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 16px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: #999;
+  opacity: 0;
+  transition: opacity 0.4s;
+  text-align: center;
+  border-radius: 10px;
+  backdrop-filter: blur(16px);
+  width: max-content;
+  pointer-events: auto;
+  user-select: text;
+}
+#game-bg-results-btn {
+  pointer-events: auto;
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -24px);
+  min-width: 140px;                    /* keep the width of the old "Play again" label */
+  padding: 10px 28px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid #7C7C7C;
+  color: #7C7C7C;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#game-bg-results-btn:hover { background: rgba(124,124,124,0.12); }
+/* Recording-action row: the three secondary buttons (Watch Recording, Save
+   Recording, Watch Best) sit in one horizontal flex row immediately under
+   #game-bg-results-btn. Anchored to the same 65% center, offset down by
+   the height of the Play-again button + a little breathing room. */
+#game-bg-record-actions {
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, 26px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+#game-bg-replay-btn,
+#game-bg-save-replay-btn,
+#game-bg-load-replay-btn,
+#game-bg-high-score-btn {
+  padding: 8px 16px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  background: none;
+  border: none;
+  color: #7C7C7C;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#game-bg-replay-btn:hover,
+#game-bg-save-replay-btn:hover,
+#game-bg-load-replay-btn:hover,
+#game-bg-high-score-btn:hover { background: rgba(124,124,124,0.12); }
+#game-bg-replay-btn:active,
+#game-bg-save-replay-btn:active,
+#game-bg-load-replay-btn:active,
+#game-bg-high-score-btn:active { background: rgba(124,124,124,0.22); }
+#game-bg-high-score-btn:disabled {
+  color: #555;
+  cursor: not-allowed;
+  opacity: 0.5;
+  background: none !important;
+}
+#game-bg-replay-badge {
+  display: none;
+  position: absolute;
+  /* Anchor to the top-left of the canvas-wrap square (which is at inset: 8px).
+     Add a small visual gap so the badge isn't flush with the circle clip. */
+  top: 20px;
+  left: 20px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #b080f8;
+  pointer-events: none;
+  user-select: none;
+}
+#game-bg-replay-badge.game-bg-visible { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: auto; }
+#game-bg-replay-badge .game-bg-replay-badge-row { display: flex; align-items: center; gap: 10px; }
+#game-bg-replay-incompat {
+  display: none;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: #e66;
+  pointer-events: none;
+  user-select: none;
+}
+#game-bg-replay-badge.game-bg-incompat #game-bg-replay-incompat { display: block; }
+#game-bg-replay-stop-btn {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid #b080f8;
+  color: #b080f8;
+  border-radius: 3px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+#game-bg-replay-stop-btn:hover  { background: rgba(176,128,248,0.12); }
+#game-bg-replay-stop-btn:active { background: rgba(176,128,248,0.22); }
+
+/* ── Clock-sweep time indicator (SVG stroke with rounded cap) ── */
+#game-bg-time-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  /* Start the stroke at 12 o'clock instead of 3. */
+  transform: rotate(-90deg);
+}
+#game-bg-time-sweep circle {
+  fill: none;
+  stroke: var(--sweep-color, #F4F2F1);
+  stroke-width: 4;
+  stroke-linecap: round;
+  /* circumference ≈ 2π·324 ≈ 2035.75. JS sets stroke-dashoffset 0→full for 0→1 sweep. */
+  stroke-dasharray: 2035.75;
+  stroke-dashoffset: 2035.75;
+}
+
+
+@keyframes game-bg-score-pop {
+  0%   { opacity: 0;    transform: translateY(0);     }
+  12%  { opacity: 0.85;                               }
+  100% { opacity: 0;    transform: translateY(-30px); }
+}
+.game-bg-score-pop {
+  position: absolute;
+  translate: 0 -50%;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: game-bg-score-pop 0.85s ease-out forwards;
+}
+
+@keyframes game-bg-tongue-msg-pop {
+  0%   { opacity: 1; transform: translate(-50%, calc(-50% + 50px)) scale(1);    }
+  15%  { opacity: 1; transform: translate(-50%, calc(-50% + 50px)) scale(1.08); }
+  100% { opacity: 0; transform: translate(-50%, calc(-50% + 50px)) scale(1.7);  }
+}
+#game-bg-tongue-msg {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, calc(-50% + 50px));
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  opacity: 0;
+}
+#game-bg-tongue-msg.game-bg-show { animation: game-bg-tongue-msg-pop 1.2s ease-out forwards; }
+
+/* ── Debug panel (dev only) ─────────────────────────────────────────────── */
+#game-bg-debug-toggle {
+  display: none;
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 1000;
+  padding: 5px 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  cursor: pointer;
+}
+#game-bg-debug-toggle:hover { background: rgba(0,0,0,0.75); }
+
+#game-bg-debug-panel {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 240px;
+  z-index: 999;
+  background: rgba(20,20,20,0.92);
+  color: #fff;
+  overflow-y: auto;
+  padding: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  cursor: default;
+}
+#game-bg-debug-panel.game-bg-debug-visible { display: block; }
+
+.game-bg-debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.game-bg-debug-header span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.game-bg-debug-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 0 4px;
+}
+.game-bg-debug-close:hover { opacity: 1; }
+
+.game-bg-debug-section {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin: 10px 0 5px;
+}
+
+.game-bg-debug-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+  gap: 3px;
+}
+
+.game-bg-debug-emoji-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 2px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  cursor: pointer;
+  color: #fff;
+  min-height: 48px;
+}
+.game-bg-debug-emoji-btn:hover { background: rgba(255,255,255,0.16); }
+.game-bg-debug-emoji-btn:active { background: rgba(255,255,255,0.24); }
+.game-bg-debug-emoji-btn .de { font-size: 20px; line-height: 1; }
+.game-bg-debug-emoji-btn .dl { font-size: 7px; margin-top: 2px; opacity: 0.6; text-align: center; }
+
+.game-bg-debug-bug-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-top: 6px;
+}
+.game-bg-debug-bug-btn {
+  flex: 1;
+  padding: 7px 0;
+  font-size: 18px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+}
+.game-bg-debug-bug-btn:hover { background: rgba(255,255,255,0.16); }
+.game-bg-debug-bug-btn:active { background: rgba(255,255,255,0.24); }
+#game-bg-debug-bug-count {
+  font-size: 12px;
+  text-align: center;
+  flex: 1;
+  opacity: 0.6;
+}
+.game-bg-debug-hint {
+  font-size: 8px;
+  text-align: center;
+  opacity: 0.35;
+  margin-top: 3px;
+}
+
+.game-bg-debug-timbre-btn {
+  padding: 5px 4px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 10px;
+  text-align: center;
+  min-height: 28px;
+}
+.game-bg-debug-timbre-btn:hover { background: rgba(255,255,255,0.16); }
+.game-bg-debug-timbre-btn:active { background: rgba(255,255,255,0.24); }
+.game-bg-debug-timbre-btn.game-bg-debug-timbre-active {
+  background: rgba(176,128,248,0.35);
+  border-color: rgba(176,128,248,0.8);
+}
+
+/* ── Credits screen ─────────────────────────────────────────────────────── */
+/* Shares the canvas-wrap's geometry (same inset, same 50% radius) so it
+   visually replaces the game field as a circular card, not a full-window
+   rectangle. Lives inside #game-bg-game-container so it scales with the
+   same transform that scales the rest of the game. */
+#game-bg-credits {
+  position: absolute;
+  inset: 8px;
+  display: none;
+  z-index: 50;
+  background: #F4F2F1;
+  border-radius: 50%;
+  overflow: hidden;                    /* clip long credits lists to the circle */
+  cursor: default;
+}
+#game-bg-credits.game-bg-credits-visible { display: flex; }
+.game-bg-credits-inner {
+  margin: auto;
+  max-width: 460px;                    /* stay inside the ~640px circle with margin for the rounded edges */
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  color: #333;
+}
+.game-bg-credits-head {
+  width: 128px;
+  height: 128px;
+  overflow: hidden;
+  position: relative;
+}
+/* Anteater sprite is a grid of 128×128 cells, 8 per row. Cell 18 = col 2,
+   row 2 → offset -256px, -256px. Static orientation; no rotation. */
+.game-bg-credits-head img {
+  position: absolute;
+  left: -256px;
+  top:  -256px;
+  pointer-events: none;
+  user-select: none;
+}
+.game-bg-credits-title {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.game-bg-credits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+.game-bg-credits-entry { line-height: 1.4; }
+.game-bg-credits-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  text-decoration: none;
+}
+a.game-bg-credits-name {
+  color: #7a5ad0;
+  border-bottom: 1px solid rgba(122,90,208,0.35);
+}
+a.game-bg-credits-name:hover { border-bottom-color: #7a5ad0; }
+.game-bg-credits-role {
+  font-size: 13px;
+  color: #666;
+  margin-top: 2px;
+}
+#game-bg-credits-close {
+  margin-top: 24px;
+  padding: 10px 28px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid #7C7C7C;
+  color: #7C7C7C;
+  border-radius: 4px;
+  font-family: inherit;
+}
+#game-bg-credits-close:hover { background: rgba(124,124,124,0.12); }
+#game-bg-credits-close:active { background: rgba(124,124,124,0.22); }
+
+/* The "CREDITS" button on the end screen shares the base styling of the
+   three recording buttons — it's already part of #game-bg-record-actions,
+   so flex layout and hover states apply. */
+#game-bg-credits-btn {
+  padding: 8px 16px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  background: none;
+  border: none;
+  color: #7C7C7C;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+#game-bg-credits-btn:hover  { background: rgba(124,124,124,0.12); }
+#game-bg-credits-btn:active { background: rgba(124,124,124,0.22); }

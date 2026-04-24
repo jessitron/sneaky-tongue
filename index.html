@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bugpoint</title>
+  <link rel="icon" type="image/svg+xml" href="./src/favicon.svg">
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body>
+
+<div id="game-bg-page-root">
+<div id="game-bg-game-container">
+
+<div id="game-bg-canvas-wrap">
+  <canvas id="game-bg-bug-canvas"></canvas><!-- Layer 1: Animated bugs -->
+  <div id="game-bg-event-labels" aria-hidden="true"><!-- Per-catch event announcements, positioned at bug coords --></div>
+  <canvas id="game-bg-gl-canvas"></canvas><!-- Layer 2: WebGL2 GPU stroke (tongue) -->
+  <canvas id="game-bg-ui-canvas"></canvas><!-- Layer 3: Canvas 2D head overlay (legacy, cleared each frame) -->
+  <div id="game-bg-head"><!-- Layer 4: SVG anteater head — two imgs cross-fade on cell switch -->
+    <img src="./src/tamandua-sprite.svg" alt="">
+    <img src="./src/tamandua-sprite.svg" alt="">
+  </div>
+  <div id="game-bg-head-debug" aria-hidden="true"><!-- Dev-only: visible while debug panel is open -->
+    <div class="spr"><img src="./src/tamandua-sprite.svg" alt=""></div>
+    <div class="lbl">idx — row — col —</div>
+  </div>
+</div>
+
+<svg id="game-bg-time-sweep" viewBox="0 0 656 656" aria-hidden="true"><!-- Time ring — stroked circle grows clockwise from 12 o'clock -->
+  <circle cx="328" cy="328" r="324"></circle>
+</svg>
+
+<div id="game-bg-game-ui">
+  <div id="game-bg-new-record-banner" aria-hidden="true">New Record</div>
+  <div id="game-bg-version" aria-hidden="true"></div>
+  <div id="game-bg-bug-count">
+    <div id="game-bg-final-score-breakdown"></div>
+    <div id="game-bg-bug-num">0</div>
+    <div id="game-bg-bug-label">bugs caught</div>
+    <div id="game-bg-record-label"></div>
+    <div id="game-bg-level-label"></div>
+  </div>
+  <div id="game-bg-tongue-msg"></div>
+  <div id="game-bg-results">
+    <div id="game-bg-best-stroke">
+      <div id="game-bg-multiply-sign">×</div>
+      <div id="game-bg-best-stroke-num">0</div>
+      <div id="game-bg-best-stroke-label">max bugs per stroke</div>
+    </div>
+    <button id="game-bg-results-btn">Play</button>
+    <div id="game-bg-record-actions">
+      <button id="game-bg-replay-btn" style="display:none">WATCH RECORDING</button>
+      <button id="game-bg-save-replay-btn" style="display:none">SAVE RECORDING</button>
+      <button id="game-bg-load-replay-btn">LOAD RECORDING</button>
+      <button id="game-bg-high-score-btn" style="display:none">WATCH BEST</button>
+      <button id="game-bg-credits-btn">CREDITS</button>
+    </div>
+    <input id="game-bg-load-replay-file" type="file" accept=".json,application/json" style="display:none">
+  </div>
+  <div id="game-bg-replay-badge">
+    <div class="game-bg-replay-badge-row">
+      <span>● REPLAY</span>
+      <button id="game-bg-replay-stop-btn" type="button">STOP</button>
+    </div>
+    <div id="game-bg-replay-incompat" aria-hidden="true">recording version is incompatible</div>
+  </div>
+</div>
+
+<div id="game-bg-credits" aria-hidden="true">
+  <div class="game-bg-credits-inner">
+    <div class="game-bg-credits-head"><img src="./src/tamandua-sprite.svg" alt=""></div>
+    <div class="game-bg-credits-title">Bugpoint</div>
+    <div class="game-bg-credits-list">
+      <div class="game-bg-credits-entry">
+        <a class="game-bg-credits-name" href="https://antithesis.com/" target="_blank" rel="noopener">Antithesis</a>
+        <div class="game-bg-credits-role">Inspiration &amp; early feedback</div>
+      </div>
+      <div class="game-bg-credits-entry">
+        <a class="game-bg-credits-name" href="https://vladkorobov.com/" target="_blank" rel="noopener">Vlad Korobov</a>
+        <div class="game-bg-credits-role">Idea, Design, Code</div>
+      </div>
+      <div class="game-bg-credits-entry">
+        <a class="game-bg-credits-name" href="https://www.beepbox.co/" target="_blank" rel="noopener">BeepBox</a>
+        <div class="game-bg-credits-role">Great sounds</div>
+      </div>
+      <div class="game-bg-credits-entry">
+        <div class="game-bg-credits-name">Artemiy Korobov</div>
+        <div class="game-bg-credits-role">Sounds and chord selection</div>
+      </div>
+      <div class="game-bg-credits-entry">
+        <a class="game-bg-credits-name" href="https://bugbash.antithesis.com/" target="_blank" rel="noopener">BugBash</a>
+        <div class="game-bg-credits-role">Great vibes</div>
+      </div>
+    </div>
+    <button id="game-bg-credits-close">I'm grateful</button>
+  </div>
+</div>
+
+</div><!-- #game-bg-game-container -->
+</div><!-- #game-bg-page-root -->
+
+<button id="game-bg-debug-toggle">Debug</button>
+<div id="game-bg-debug-panel"></div>
+
+<script src="./src/vendor/beepbox_stripped_min.js"></script>
+<script src="./dist/bugpoint.js"></script>
+</body>
+</html>
